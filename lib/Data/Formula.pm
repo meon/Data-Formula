@@ -230,35 +230,35 @@ Data::Formula - formulas evaluation and calculation
 =head1 SYNOPSIS
 
     my $df = Data::Formula->new(
-        formula   => 'n212 - n213 * n314 + n354',
+        formula   => 'var212 - var213 * var314 + var354',
     );
     my $val = $df->calculate(
-        n212 => 5,
-        n213 => 10,
-        n314 => 7,
-        n354 => 100
+        var212 => 5,
+        var213 => 10,
+        var314 => 7,
+        var354 => 100
     );
     # 5-(10*7)+100
 
     my $df = Data::Formula->new(
-        variables => [qw( n212 n213 n274 n294 n314 n334 n354 n374 n394 )],
-        formula   => 'n212 - n213 + n314 * (n354 + n394) - 10',
+        variables => [qw( var212 var213 n274 n294 var314 var334 var354 var374 var394 )],
+        formula   => 'var212 - var213 + var314 * (var354 + var394) - 10',
     );
     my $used_variables = $df->used_variables;
-    # [ n212 n213 n314 n354 n394 ]
+    # [ var212 var213 var314 var354 var394 ]
 
     my $val = $df->calculate(
-        n212 => 5,
-        n213 => 10,
-        n314 => 2,
-        n354 => 3,
-        n394 => 9,
+        var212 => 5,
+        var213 => 10,
+        var314 => 2,
+        var354 => 3,
+        var394 => 9,
     );
     # 5-10+2*(3+9)-10
 
 =head1 DESCRIPTION
 
-=head1 PROPERTIES
+evaluate and calulate formulas with variables of the type var212 - var213 + var314 * (var354 + var394) - 10
 
 =head1 METHODS
 
@@ -266,8 +266,37 @@ Data::Formula - formulas evaluation and calculation
 
 Object constructor.
 
+     my $df = Data::Formula->new(
+        formula   => 'var212 - var213 * var314 + var354',
+     );
+
+=head2 used_variables() 
+
+return array with variables used in formula
+
+=head2 calculate()
+
+evaluate formula with values for variables, returns caluculated value
+
 =head1 AUTHOR
 
-Jozef Kutej
+Jozef Kutej, C<< <jkutej at cpan.org> >>
+
+=head1 CONTRIBUTORS
+ 
+The following people have contributed to the File::is by committing their
+code, sending patches, reporting bugs, asking questions, suggesting useful
+advises, nitpicking, chatting on IRC or commenting on my blog (in no particular
+order):
+
+    Andrea Pavlovic
+
+=head1 LICENSE AND COPYRIGHT
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See http://dev.perl.org/licenses/ for more information.
 
 =cut
