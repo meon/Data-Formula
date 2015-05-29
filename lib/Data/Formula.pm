@@ -291,6 +291,11 @@ order):
 
     Andrea Pavlovic
 
+=head1 THANKS
+
+Thanks to L<VÖV - Verband Österreichischer Volkshochschulen|http://www.vhs.or.at/>
+for sponsoring development of this module.
+
 =head1 LICENSE AND COPYRIGHT
 
 This program is free software; you can redistribute it and/or modify it
