@@ -26,6 +26,11 @@ my %operators = (
         calc   => 'multiply',
         prio   => 50,
     },
+    '/' => {
+        method => 'divide',
+        calc   => 'divide',
+        prio   => 50,
+    },
     '(' => {
         method => 'bracket_left',
     },
@@ -79,6 +84,10 @@ sub _rpn_method_minus {
 sub _rpn_method_multiply {
     my ($self, $rpn, $ops) = @_;
     return $self->rpn_standard_operator('*', $rpn, $ops);
+}
+sub _rpn_method_divide {
+    my ($self, $rpn, $ops) = @_;
+    return $self->rpn_standard_operator('/', $rpn, $ops);
 }
 
 sub rpn_standard_operator {
@@ -188,6 +197,22 @@ sub _rpn_calc_multiply {
     my $val1 = pop(@$rpn);
 
     push(@$rpn,$val1*$val2);
+    return $rpn;
+}
+sub _rpn_calc_divide {
+    my ($self, $rpn) = @_;
+
+    die 'not enough parameters left on stack'
+        unless @$rpn > 1;
+
+    my $val2 = pop(@$rpn);
+    my $val1 = pop(@$rpn);
+    if(!$val2) {
+        push(@$rpn,0);
+    }
+    else {
+        push(@$rpn,$val1/$val2);
+    }
     return $rpn;
 }
 

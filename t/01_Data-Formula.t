@@ -173,4 +173,64 @@ LONGER_FORMULA: {
     is($val,(5-10+(2*(3+9))-10), 'calculate()');
 }
 
+DIVISION_FORMULA: {
+    my $formula = 'n45 / n100';
+    note('testing formula: '.$formula);
+    my $df = Data::Formula->new(
+        formula   => $formula,
+    );
+
+    my $val = $df->calculate(
+        n100 => 100,
+        n45 => 45,
+    );
+    is($val,(45/100), 'calculate()');
+
+    my $tokens = $df->_tokens;
+    eq_or_diff(
+        $tokens,
+        [qw( n45 / n100 )],
+        '_tokens()'
+    );
+
+    my $rpn = $df->_rpn;
+    eq_or_diff(
+        $rpn,
+        [
+            'n45',
+            'n100',
+            { 'name' => '/', calc => 'divide', method => 'divide', prio => 50, },
+        ],
+        '_rpn()'
+    );
+}
+
+DIVISION_BY_ZERO_FORMULA: {
+    my $formula = 'n100 / ( n10 - n10 )';
+    note('testing formula: '.$formula);
+    my $df = Data::Formula->new(
+        formula   => $formula,
+    );
+
+    my $val = $df->calculate(
+        n100 => 100,
+        n10 => 10,
+    );
+    is($val,0 , 'calculate()');
+}
+
+PERCENT_FORMULA: {
+    my $formula = '100 * n45 / n100 ';
+    note('testing formula: '.$formula);
+    my $df = Data::Formula->new(
+        formula   => $formula,
+    );
+
+    my $val = $df->calculate(
+        n100 => 100,
+        n45 => 45,
+    );
+    is($val, 45 , 'calculate()');
+}
+
 done_testing();
