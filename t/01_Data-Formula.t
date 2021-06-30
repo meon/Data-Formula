@@ -219,6 +219,19 @@ DIVISION_BY_ZERO_FORMULA: {
     is($val,0 , 'calculate()');
 }
 
+DIVISION_BY_UNDEF_FORMULA: {
+    my $formula = 'n100 / nope ';
+    note('testing formula: '.$formula);
+    my $df = Data::Formula->new(
+        formula   => $formula,
+    );
+
+    my $val = $df->calculate(
+        n100 => 100,
+    );
+    is($val,0 , 'calculate()');
+}
+
 PERCENT_FORMULA: {
     my $formula = '100 * n45 / n100 ';
     note('testing formula: '.$formula);

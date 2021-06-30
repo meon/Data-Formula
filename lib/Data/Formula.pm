@@ -234,8 +234,11 @@ sub calculate {
             if (exists($variables{$token})) {
                 push(@$rpn, $variables{$token} // 0);
             }
-            else {
+            elsif ($token =~ /^[+\-]?\d*\.?\d*$/) {
                 push(@$rpn, $token);
+            }
+            else { # not a literal number, not a valid token
+                push(@$rpn, 0);
             }
         }
     }
