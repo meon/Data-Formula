@@ -34,20 +34,16 @@ my %operators = (
         calc   => 'divide',
         prio   => 50,
     },
-    '(' => {
-        method => 'bracket_left',
-    },
-    ')' => {
-        method => 'bracket_right',
-    },
+    '(' => {method => 'bracket_left',},
+    ')' => {method => 'bracket_right',},
 );
 
-has 'variables'      => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
-has 'formula'        => ( is => 'ro', isa => 'Str', default => sub { [] } );
-has '_tokens'        => ( is => 'ro', isa => 'ArrayRef', lazy_build => 1, );
-has '_rpn'           => ( is => 'ro', isa => 'ArrayRef', lazy_build => 1, );
-has '_op_indent'     => ( is => 'rw', isa => 'Int', default => 0, );
-has 'used_variables' => ( is => 'ro', isa => 'ArrayRef', lazy_build => 1, );
+has 'variables'      => (is => 'rw', isa => 'ArrayRef', default    => sub {[]});
+has 'formula'        => (is => 'ro', isa => 'Str',      default    => sub {[]});
+has '_tokens'        => (is => 'ro', isa => 'ArrayRef', lazy_build => 1,);
+has '_rpn'           => (is => 'ro', isa => 'ArrayRef', lazy_build => 1,);
+has '_op_indent'     => (is => 'rw', isa => 'Int',      default    => 0,);
+has 'used_variables' => (is => 'ro', isa => 'ArrayRef', lazy_build => 1,);
 
 has 'on_error' => (
     is        => 'rw',
@@ -61,11 +57,11 @@ has 'on_missing_token' => (
 );
 
 sub _indented_operator {
-    my ($self,$op) = @_;
+    my ($self, $op) = @_;
     return {
         name => $op,
         %{$operators{$op}},
-        prio => ($operators{$op}->{prio}+($self->_op_indent*100)),
+        prio => ($operators{$op}->{prio} + ($self->_op_indent * 100)),
     };
 }
 
@@ -76,29 +72,32 @@ sub _build__rpn {
     my $ops = [];
     foreach my $token (@{$self->_tokens}) {
         if ($operators{$token}) {
-            my $rpn_method = '_rpn_method_'.$operators{$token}->{method};
-            ($rpn,$ops) = $self->$rpn_method($rpn,$ops)
+            my $rpn_method = '_rpn_method_' . $operators{$token}->{method};
+            ($rpn, $ops) = $self->$rpn_method($rpn, $ops);
         }
         else {
             push(@$rpn, $token);
         }
     }
 
-    return [@$rpn,reverse(@$ops)];
+    return [@$rpn, reverse(@$ops)];
 }
 
 sub _rpn_method_plus {
     my ($self, $rpn, $ops) = @_;
     return $self->rpn_standard_operator('+', $rpn, $ops);
 }
+
 sub _rpn_method_minus {
     my ($self, $rpn, $ops) = @_;
     return $self->rpn_standard_operator('-', $rpn, $ops);
 }
+
 sub _rpn_method_multiply {
     my ($self, $rpn, $ops) = @_;
     return $self->rpn_standard_operator('*', $rpn, $ops);
 }
+
 sub _rpn_method_divide {
     my ($self, $rpn, $ops) = @_;
     return $self->rpn_standard_operator('/', $rpn, $ops);
@@ -106,19 +105,19 @@ sub _rpn_method_divide {
 
 sub rpn_standard_operator {
     my ($self, $cur_op, $rpn, $ops) = @_;
-    my $prio = $operators{$cur_op}->{prio}+($self->_op_indent*100);
+    my $prio = $operators{$cur_op}->{prio} + ($self->_op_indent * 100);
     if (@$ops) {
         while (@$ops) {
             my $prev_op = $ops->[-1];
             if ($prev_op->{prio} >= $prio) {
-                push(@$rpn,pop(@$ops));
+                push(@$rpn, pop(@$ops));
             }
             else {
                 last;
             }
         }
     }
-    push(@$ops,$self->_indented_operator($cur_op));
+    push(@$ops, $self->_indented_operator($cur_op));
 
     return ($rpn, $ops);
 }
@@ -130,6 +129,7 @@ sub _rpn_method_bracket_left {
 
     return ($rpn, $ops);
 }
+
 sub _rpn_method_bracket_right {
     my ($self, $rpn, $ops) = @_;
 
@@ -142,9 +142,8 @@ sub _build_used_variables {
     my ($self, @rpn) = @_;
 
     return [
-        grep { $_ !~ m/^[0-9]+$/ }
-        grep { !$operators{$_} }
-        @{$self->_tokens}
+        grep {$_ !~ m/^[0-9]+$/}
+        grep {!$operators{$_}} @{$self->_tokens}
     ];
 }
 
@@ -155,26 +154,20 @@ sub _build__tokens {
     my $formula = $self->formula;
     $formula =~ s/\s//g;
 
-    my $op_regexp = join('',map { q{\\}.$_ } keys %operators);
-    my $op_regexp_with_variable = '^([^'.$op_regexp.']*?)(['.$op_regexp.'])';
+    my $op_regexp               = join('', map {q{\\} . $_} keys %operators);
+    my $op_regexp_with_variable = '^([^' . $op_regexp . ']*?)([' . $op_regexp . '])';
     while ($formula =~ m/$op_regexp_with_variable/) {
         my $variable = $1;
         my $operator = $2;
         push(@tokens, $variable) if length($variable);
         push(@tokens, $operator);
-        $formula = substr($formula,length($variable.$operator));
+        $formula = substr($formula, length($variable . $operator));
     }
     if (length($formula)) {
         push(@tokens, $formula);
     }
 
-    return [
-        map {
-            $_ =~ m/^[0-9]+$/
-            ? $_+0
-            : $_
-        } @tokens
-    ];
+    return [map {$_ =~ m/^[0-9]+$/ ? $_ + 0 : $_} @tokens];
 }
 
 sub _rpn_calc_plus {
@@ -186,9 +179,10 @@ sub _rpn_calc_plus {
     my $val2 = pop(@$rpn);
     my $val1 = pop(@$rpn);
 
-    push(@$rpn,$val1+$val2);
+    push(@$rpn, $val1 + $val2);
     return $rpn;
 }
+
 sub _rpn_calc_minus {
     my ($self, $rpn) = @_;
 
@@ -198,9 +192,10 @@ sub _rpn_calc_minus {
     my $val2 = pop(@$rpn);
     my $val1 = pop(@$rpn);
 
-    push(@$rpn,$val1-$val2);
+    push(@$rpn, $val1 - $val2);
     return $rpn;
 }
+
 sub _rpn_calc_multiply {
     my ($self, $rpn) = @_;
 
@@ -210,9 +205,10 @@ sub _rpn_calc_multiply {
     my $val2 = pop(@$rpn);
     my $val1 = pop(@$rpn);
 
-    push(@$rpn,$val1*$val2);
+    push(@$rpn, $val1 * $val2);
     return $rpn;
 }
+
 sub _rpn_calc_divide {
     my ($self, $rpn) = @_;
 
@@ -225,7 +221,7 @@ sub _rpn_calc_divide {
     die "Illegal division by zero\n"
         unless $val2;
 
-    push(@$rpn,$val1/$val2);
+    push(@$rpn, $val1 / $val2);
     return $rpn;
 }
 
@@ -240,8 +236,8 @@ sub calculate {
     my $ops = [];
     foreach my $token (@{$self->_rpn}) {
         if (ref($token) eq 'HASH') {
-            my $rpn_method = '_rpn_calc_'.$token->{calc};
-            ($rpn) = eval { $self->$rpn_method($rpn) } // [];
+            my $rpn_method = '_rpn_calc_' . $token->{calc};
+            ($rpn) = eval {$self->$rpn_method($rpn)} // [];
             $self->_report_error($rpn, $@)
                 if $@;
         }
@@ -281,7 +277,6 @@ sub _report_error {
 }
 
 1;
-
 
 __END__
 
