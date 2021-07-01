@@ -9,6 +9,8 @@ use Test::Most;
 
 use_ok('Data::Formula') or die;
 
+my $this_file = __FILE__;
+
 SIMPLE_FORMULA: {
     my $formula = 'n212 - n213 + n314 + n354';
     note('testing formula: '.$formula);
@@ -210,6 +212,7 @@ DIVISION_BY_ZERO_FORMULA: {
     note('testing formula: '.$formula);
     my $df = Data::Formula->new(
         formula   => $formula,
+        on_error => 0,
     );
 
     my $val = $df->calculate(
@@ -219,17 +222,92 @@ DIVISION_BY_ZERO_FORMULA: {
     is($val,0 , 'calculate()');
 }
 
+DIVISION_BY_ZERO_FORMULA_EXCEPTION: {
+    my $formula = 'n100 / ( n10 - n10 )';
+    note('testing formula: '.$formula);
+    my $df = Data::Formula->new(
+        formula   => $formula,
+    );
+
+    throws_ok(sub {
+        my $val = $df->calculate(
+            n100 => 100,
+            n10 => 10,
+        );
+    }, qr/division by zero.+$this_file/ , 'calculate() -> division by zero');
+}
+
+DIVISION_BY_ZERO_FORMULA_CODE: {
+    my $formula = 'n100 / ( n10 - n10 )';
+    note('testing formula: '.$formula);
+    my $df = Data::Formula->new(
+        formula   => $formula,
+        on_error => sub { $_[0] },
+    );
+
+    my $val = $df->calculate(
+        n100 => 100,
+        n10 => 10,
+    );
+    is($val, 'Illegal division by zero', 'calculate() -> code ref result');
+}
+
 DIVISION_BY_UNDEF_FORMULA: {
     my $formula = 'n100 / nope ';
     note('testing formula: '.$formula);
     my $df = Data::Formula->new(
         formula   => $formula,
+        on_error => 0,
     );
 
     my $val = $df->calculate(
         n100 => 100,
     );
     is($val,0 , 'calculate()');
+}
+
+DIVISION_BY_UNDEF_FORMULA_UNDEF: {
+    my $formula = 'n100 / nope ';
+    note('testing formula: '.$formula);
+    my $df = Data::Formula->new(
+        formula   => $formula,
+        on_error => undef,
+    );
+
+    my $val = $df->calculate(
+        n100 => 100,
+    );
+    is($val,undef , 'calculate() -> undef');
+}
+
+DIVISION_BY_UNDEF_FORMULA_EXCEPTION: {
+    my $formula = 'n100 / nope ';
+    note('testing formula: '.$formula);
+    my $df = Data::Formula->new(
+        formula   => $formula,
+    );
+
+    throws_ok(
+        sub {
+            my $val = $df->calculate(n100 => 100,);
+        },
+        qr/"nope" is not a literal number, not a valid token.+$this_file/,
+        'calculate() -> division by zero'
+    );
+}
+
+DIVISION_BY_UNDEF_FORMULA_DEFAULT: {
+    my $formula = 'n100 / nope ';
+    note('testing formula: '.$formula);
+    my $df = Data::Formula->new(
+        formula   => $formula,
+        on_missing_token => 1,
+    );
+
+    my $val = $df->calculate(
+        n100 => 100,
+    );
+    is($val, 100 , 'calculate() -> default value for missing token');
 }
 
 PERCENT_FORMULA: {

@@ -7,6 +7,8 @@ my $build = Module::Build->new(
     requires            => {
         'List::MoreUtils' => 0,
         'Moose'           => 0,
+        'MooseX::StrictConstructor'           => 0,
+        'Carp'            => 0,
     },
     build_requires => {
         'Test::Most' => 0,

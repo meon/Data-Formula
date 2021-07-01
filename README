@@ -1,7 +1,9 @@
 NAME
+
     Data::Formula - formulas evaluation and calculation
 
 SYNOPSIS
+
         my $df = Data::Formula->new(
             formula   => 'var212 - var213 * var314 + var354',
         );
@@ -12,14 +14,16 @@ SYNOPSIS
             var354 => 100
         );
         # 5-(10*7)+100
-
+    
         my $df = Data::Formula->new(
-            variables => [qw( var212 var213 n274 n294 var314 var334 var354 var374 var394 )],
-            formula   => 'var212 - var213 + var314 * (var354 + var394) - 10',
+            variables        => [qw( var212 var213 n274 n294 var314 var334 var354 var374 var394 )],
+            formula          => 'var212 - var213 + var314 * (var354 + var394) - 10',
+            on_error         => undef,
+            on_missing_token => 0,
         );
         my $used_variables = $df->used_variables;
         # [ var212 var213 var314 var354 var394 ]
-
+    
         my $val = $df->calculate(
             var212 => 5,
             var213 => 10,
@@ -30,27 +34,65 @@ SYNOPSIS
         # 5-10+2*(3+9)-10
 
 DESCRIPTION
+
     evaluate and calulate formulas with variables of the type var212 -
     var213 + var314 * (var354 + var394) - 10
 
+ACCESSORS
+
+ formula
+
+    Formula for calculation. Required.
+
+ on_error
+
+    Sets what should "calculate()" return in case of an error. When
+    division by zero happens or unknown tokens are found.
+
+    Can be a scalar value, like for example 0 or undef, or a code ref that
+    will be executed with error message as argument.
+
+    Optional, if not set "calculate()" will throw an excetion in case of an
+    error.
+
+ on_missing_token
+
+    Sets what should happen when there is a missing/unknown token found in
+    formula.
+
+    Can be a scalar value, like fixed number, or a code ref that will be
+    executed with token name as argument.
+
+    Optional, if not set "calculate()" will throw an excetion with unknown
+    tokens.
+
 METHODS
-  new()
+
+ new()
+
     Object constructor.
 
          my $df = Data::Formula->new(
             formula   => 'var212 - var213 * var314 + var354',
          );
 
-  used_variables()
+ used_variables()
+
     return array with variables used in formula
 
-  calculate()
-    evaluate formula with values for variables, returns caluculated value
+ calculate()
+
+    Evaluate formula with values for variables, returns calculated value.
+
+    Will throw expetion on division by zero of unknown variables, unless
+    changes by "on_error" or "on_missing_token"
 
 AUTHOR
-    Jozef Kutej, `<jkutej at cpan.org>'
+
+    Jozef Kutej, <jkutej at cpan.org>
 
 CONTRIBUTORS
+
     The following people have contributed to the File::is by committing
     their code, sending patches, reporting bugs, asking questions,
     suggesting useful advises, nitpicking, chatting on IRC or commenting on
@@ -58,7 +100,13 @@ CONTRIBUTORS
 
         Andrea Pavlovic
 
+THANKS
+
+    Thanks to VÖV - Verband Österreichischer Volkshochschulen
+    <http://www.vhs.or.at/> for sponsoring development of this module.
+
 LICENSE AND COPYRIGHT
+
     This program is free software; you can redistribute it and/or modify it
     under the terms of either: the GNU General Public License as published
     by the Free Software Foundation; or the Artistic License.

@@ -7,8 +7,11 @@ use 5.010;
 
 use List::MoreUtils qw(any);
 use Moose;
+use MooseX::StrictConstructor;
+use Carp qw(croak);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
+our @CARP_NOT;
 
 my %operators = (
     '+' => {
@@ -45,6 +48,17 @@ has '_tokens'        => ( is => 'ro', isa => 'ArrayRef', lazy_build => 1, );
 has '_rpn'           => ( is => 'ro', isa => 'ArrayRef', lazy_build => 1, );
 has '_op_indent'     => ( is => 'rw', isa => 'Int', default => 0, );
 has 'used_variables' => ( is => 'ro', isa => 'ArrayRef', lazy_build => 1, );
+
+has 'on_error' => (
+    is        => 'rw',
+    predicate => 'has_on_error',
+    clearer   => 'clear_on_error',
+);
+has 'on_missing_token' => (
+    is        => 'rw',
+    predicate => 'has_on_missing_token',
+    clearer   => 'clear_on_missing_token',
+);
 
 sub _indented_operator {
     my ($self,$op) = @_;
@@ -207,12 +221,11 @@ sub _rpn_calc_divide {
 
     my $val2 = pop(@$rpn);
     my $val1 = pop(@$rpn);
-    if(!$val2) {
-        push(@$rpn,0);
-    }
-    else {
-        push(@$rpn,$val1/$val2);
-    }
+
+    die "Illegal division by zero\n"
+        unless $val2;
+
+    push(@$rpn,$val1/$val2);
     return $rpn;
 }
 
@@ -228,7 +241,9 @@ sub calculate {
     foreach my $token (@{$self->_rpn}) {
         if (ref($token) eq 'HASH') {
             my $rpn_method = '_rpn_calc_'.$token->{calc};
-            ($rpn) = $self->$rpn_method($rpn)
+            ($rpn) = eval { $self->$rpn_method($rpn) } // [];
+            $self->_report_error($rpn, $@)
+                if $@;
         }
         else {
             if (exists($variables{$token})) {
@@ -237,8 +252,14 @@ sub calculate {
             elsif ($token =~ /^[+\-]?\d*\.?\d*$/) {
                 push(@$rpn, $token);
             }
-            else { # not a literal number, not a valid token
-                push(@$rpn, 0);
+            else {
+                if (my $on_missing = $self->has_on_missing_token) {
+                    push(@$rpn, (ref($on_missing) eq 'CODE' ? $on_missing->($token) : $on_missing));
+                }
+                else {
+                    $self->_report_error($rpn,
+                        '"' . $token . '" is not a literal number, not a valid token');
+                }
             }
         }
     }
@@ -246,10 +267,25 @@ sub calculate {
     return @$rpn[0];
 }
 
+sub _report_error {
+    my ($self, $rpn, $err) = @_;
+    local @CARP_NOT = __PACKAGE__;
+    chomp($err);
+    if ($self->has_on_error) {
+        my $on_err = $self->on_error;
+        push(@$rpn, (ref($on_err) eq 'CODE' ? $on_err->($err) : $on_err));
+    }
+    else {
+        croak($err);
+    }
+}
+
 1;
 
 
 __END__
+
+=encoding utf8
 
 =head1 NAME
 
@@ -269,8 +305,10 @@ Data::Formula - formulas evaluation and calculation
     # 5-(10*7)+100
 
     my $df = Data::Formula->new(
-        variables => [qw( var212 var213 n274 n294 var314 var334 var354 var374 var394 )],
-        formula   => 'var212 - var213 + var314 * (var354 + var394) - 10',
+        variables        => [qw( var212 var213 n274 n294 var314 var334 var354 var374 var394 )],
+        formula          => 'var212 - var213 + var314 * (var354 + var394) - 10',
+        on_error         => undef,
+        on_missing_token => 0,
     );
     my $used_variables = $df->used_variables;
     # [ var212 var213 var314 var354 var394 ]
@@ -288,6 +326,32 @@ Data::Formula - formulas evaluation and calculation
 
 evaluate and calulate formulas with variables of the type var212 - var213 + var314 * (var354 + var394) - 10
 
+=head1 ACCESSORS
+
+=head2 formula
+
+Formula for calculation. Required.
+
+=head2 on_error
+
+Sets what should L</calculate()> return in case of an error. When division
+by zero happens or unknown tokens are found.
+
+Can be a scalar value, like for example C<0> or C<undef>, or a code ref
+that will be executed with error message as argument.
+
+Optional, if not set L</calculate()> will throw an excetion in case of an error.
+
+=head2 on_missing_token
+
+Sets what should happen when there is a missing/unknown token found in
+formula.
+
+Can be a scalar value, like fixed number, or a code ref
+that will be executed with token name as argument.
+
+Optional, if not set L</calculate()> will throw an excetion with unknown tokens.
+
 =head1 METHODS
 
 =head2 new()
@@ -304,7 +368,10 @@ return array with variables used in formula
 
 =head2 calculate()
 
-evaluate formula with values for variables, returns caluculated value
+Evaluate formula with values for variables, returns calculated value.
+
+Will throw expetion on division by zero of unknown variables, unless
+changes by L</on_error> or L</on_missing_token>
 
 =head1 AUTHOR
 
