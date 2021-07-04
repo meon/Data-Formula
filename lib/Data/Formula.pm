@@ -335,7 +335,7 @@ by zero happens or unknown tokens are found.
 Can be a scalar value, like for example C<0> or C<undef>, or a code ref
 that will be executed with error message as argument.
 
-Optional, if not set L</calculate()> will throw an excetion in case of an error.
+Optional, if not set L</calculate()> will throw an exception in case of an error.
 
 =head2 on_missing_token
 
@@ -345,7 +345,7 @@ formula.
 Can be a scalar value, like fixed number, or a code ref
 that will be executed with token name as argument.
 
-Optional, if not set L</calculate()> will throw an excetion with unknown tokens.
+Optional, if not set L</calculate()> will throw an exception with unknown tokens.
 
 =head1 METHODS
 
