@@ -380,6 +380,7 @@ advises, nitpicking, chatting on IRC or commenting on my blog (in no particular
 order):
 
     Andrea Pavlovic
+    Thomas Klausner
 
 =head1 THANKS
 
